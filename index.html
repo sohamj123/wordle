@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Document</title>
+
+</head>
+<body>
+
+<input type="text" id="txtSearch" />
+<input type="button" id="btnSearch" value="Search" onclick="simulation();" />
+<input type="file" id="inputFile" />
+<script>
+    //used to import in and create the array with all the five letter words in it 
+    const inputFile = document.querySelector('#inputFile');
+    var array;
+    var word = "tacit";
+    inputFile.addEventListener('change', () => {
+    const fileReader = new FileReader();
+    fileReader.onload = e => {
+        array = e.target.result.split('\n');
+    };
+    fileReader.readAsText(inputFile.files[0], 'UTF-8');
+    });
+    
+    
+    // function that is found on click, theoretically is supposed to find the best word to guess at the next point
+    function doSomething(){
+        var numGuesses = 0;
+        // creates array that will hold how often each letter apears 
+        var letters = new Array(26).fill(0);
+        
+        //fills in letters array with how often each letter apears
+        for(var i = 0;i<array.length;i++){
+              for(var j = 0;j<5;j++){
+                letters[array[i].charCodeAt(j)-97] = letters[array[i].charCodeAt(j)-97] + 1;
+            }
+        }
+        //calculates the value of each word by adding up how many times each letter apears in the word
+        var vals = [];
+        for(var i = 0;i<array.length;i++){
+            var lettersIn = new Array(26).fill(0);
+            var val = 0;
+            for(var j = 0;j<5;j++){
+                //checks to see if that word has any repeating letters, if it does then it is not a valid first guess
+                lettersIn[array[i].charCodeAt(j)-97] = lettersIn[array[i].charCodeAt(j)-97] + 1;
+                if(lettersIn[array[i].charCodeAt(j)-97] == 1){
+                    val = val + letters[array[i].charCodeAt(j)-97];
+                }
+            }
+            vals.push(val);
+        }
+        //used to find the most common position of each letter but currently does not work as there is a problem 
+        //with both the code and the math
+        /*
+        var positionLetters = new Array(26);
+        for(var i = 0;i<26;i++){
+            positionLetters[i] = new Array(5).fill(0);
+        }  
+        console.log(positionLetters);  
+        for(var i = 0;i<array.length;i++){
+            for(var j = 0;j<5;j++){
+                positionLetters[array[i].charCodeAt(j)-97][j] = positionLetters[array[i].charCodeAt(j)-97][j] + 1;
+            }
+        }
+        console.log(positionLetters);
+        */
+        //checks to see which word/words has the highest value 
+        var positions = [];
+        var maxVal = -1;
+        for(var i = 0;i<vals.length;i++){
+            if(vals[i] == maxVal){
+                positions.push(i);
+            }
+            if(vals[i]>maxVal){
+                positions = [];
+                positions.push(i);
+                maxVal = vals[i]; 
+            }
+           
+        }
+        //console.log(array[positions[0]]);
+        var guess = array[positions[0]];
+        numGuesses = numGuesses + 1;
+        console.log(guess);
+        if(guess == word){
+            return numGuesses;
+            //console.log(true);
+        } else {
+            //console.log(false);
+        }
+        var possibleGuesses = [];
+        for(var i = 0;i<array.length;i++){
+            possibleGuesses.push(array[i]);
+        }
+        var incorrectLetters = new Array(26).fill(0);
+        while(guess != word){
+            var correctPosition = [];
+            var correctLetters = new Array(26).fill(0);
+            var incorrectPositions = new Array(26);
+            
+                for(var i = 0;i<26;i++){
+                    incorrectPositions[i] = new Array;
+                }
+                var guessLetters = new Array(26).fill(0);
+                var wordLetters = new Array(26).fill(0);
+                for(var i = 0;i<5;i++){
+                    guessLetters[guess.charCodeAt(i)-97]=guessLetters[guess.charCodeAt(i)-97]+1;
+                    wordLetters[word.charCodeAt(i)-97]=wordLetters[word.charCodeAt(i)-97]+1;
+                }
+                for(var i = 0;i<26;i++){
+                    if(wordLetters[i] !=0 && guessLetters[i] >= wordLetters[i]){
+                        correctLetters[i] = correctLetters[i] + wordLetters[i];
+                    }
+                    if(guessLetters[i] != 0 && guessLetters[i] < wordLetters[i]){
+                        correctLetters[i] = correctLetters[i] + guessLetters[i];
+                    }
+                }
+                for(var i = 0;i<26;i++){
+                    if(guessLetters[i] > correctLetters[i]){
+                        incorrectLetters[i] = guessLetters[i]-correctLetters[i] + incorrectLetters[i];
+                    }
+                }
+                for(var i = 0;i<5;i++){
+                    if(guess.charAt(i) == word.charAt(i)){
+                        correctPosition.push(i);
+                        correctLetters[word.charCodeAt(i)-97] = correctLetters[word.charCodeAt(i)-97]; 
+                    }
+                }
+                //console.log(incorrectLetters);
+                //console.log(correctPosition);
+                //console.log(correctLetters);
+                for(var i = 0;i<5;i++){
+                    if(correctPosition.includes(i)){
+                        continue;
+                    } else {
+                        if(correctLetters[guess.charCodeAt(i)-97]>0){
+                            incorrectPositions[guess.charCodeAt(i)-97].push(i);
+                        }
+                    }
+                }
+                    var correctPositionLetters = [];
+                    for(var i = 0;i<correctPosition.length;i++){
+                        correctPositionLetters.push(guess.charAt(correctPosition[i]));
+                    }
+                    //console.log(incorrectPositions);
+                    // removes all words with letters that are not supposed to be in the word
+                    for(var j = 0;j<incorrectLetters.length;j++){
+                        if((incorrectLetters[j]>0 && correctLetters[j] == 0)){
+                            var letter = String.fromCharCode(j+97);
+                            //console.log(letter);
+                            for(var i = 0;i<possibleGuesses.length;i++){
+                                for(var k = 0;k<5;k++){
+                                    if(!possibleGuesses.includes(k)){
+                                        if(possibleGuesses[i].charAt(k) == letter){
+                                            possibleGuesses.splice(i,1);
+                                            i--;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    //console.log(possibleGuesses.length);
+                    //console.log(array.length);
+                    //removes all words without the letters in the correct position
+                    for(var i = 0;i<possibleGuesses.length;i++){
+                        for(var j = 0;j<correctPosition.length;j++){
+                            if(possibleGuesses[i].charAt(correctPosition[j]) != guess.charAt(correctPosition[j])){
+                                possibleGuesses.splice(i,1);
+                                i--;
+                                break;
+                            }
+                        }
+                    }
+                    //removes all words with letters in the wrong position
+                    //console.log(possibleGuesses.length);
+                    var breakBoth = false;
+                    for(var i = 0;i<possibleGuesses.length;i++){
+                        for(var j = 0;j<26;j++){
+                            for(var k = 0;k<incorrectPositions[j].length;k++){
+                                if(possibleGuesses[i].charAt(incorrectPositions[j][k]) == String.fromCharCode(j+97)){
+                                    possibleGuesses.splice(i,1);
+                                    i--;
+                                    breakBoth = true;
+                                    break;
+                                }
+                            }
+                            if(breakBoth){
+                                breakBoth  = false;
+                                break;
+                            }
+                        }
+                    }
+                    for(var j = 0;j<26;j++){
+                        for(var i = 0;i<possibleGuesses.length;i++){
+                            if(incorrectPositions[j].length > 0){
+                                if(!possibleGuesses[i].includes(String.fromCharCode(j+97))){
+                                    possibleGuesses.splice(i,1);
+                                    i--;
+                                }
+                            }
+                        }
+                    }
+                    //console.log(possibleGuesses.length);
+                    //console.log(possibleGuesses);
+                    var occurences = new Array(26).fill(0);
+                    for(var i = 0;i<possibleGuesses.length;i++){
+                        for(var j = 0;j<5;j++){
+                            occurences[possibleGuesses[i].charCodeAt(j)-97] = occurences[possibleGuesses[i].charCodeAt(j)-97] + 1;
+                        }
+                    }
+                    //console.log(occurences);
+                    var valOf = [];
+                    var temp2 = 0;
+                    for(var i = 0;i<possibleGuesses.length;i++){
+                        for(var j = 0;j<5;j++){
+                            temp2 = temp2 + occurences[possibleGuesses[i].charCodeAt(j)-97];
+                        }
+                        valOf.push(temp2);
+                    }
+                    maxVal = -1;
+                    positions = [];
+                    for(var i = 0;i<valOf.length;i++){
+                        if(valOf[i] == maxVal){
+                            positions.push(i);
+                        }
+                        if(valOf[i]>maxVal){
+                            positions = [];
+                            positions.push(i);
+                            maxVal = valOf[i]; 
+                        }
+                    }
+                    //console.log(positions);
+                    guess = possibleGuesses[positions[0]];
+                    numGuesses = numGuesses + 1;
+                    //console.log(guess);
+                    if(guess == word){
+                        //console.log(true);
+                        return numGuesses;
+                    } else {
+                        //console.log(false);
+                    }
+            }
+    }
+    function simulation(){
+        var numGuesses = [];
+        for(var i = 0;i<array.length-1;i++){
+            word = array[i];
+            numGuesses.push(doSomething());
+        }
+        console.log(numGuesses);
+        var totalGuesses = 0;
+        for(var i = 0;i<numGuesses.length;i++){
+            totalGuesses = totalGuesses + numGuesses[i];
+        }
+        console.log(totalGuesses);
+        console.log(totalGuesses/numGuesses.length);
+    }
+   
+</script>       
+</body>
+</html>
